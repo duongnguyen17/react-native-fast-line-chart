@@ -1,0 +1,23 @@
+{
+  "cxxNamespace": ["fastlinechart"],
+  "ios": {
+    "iosModuleName": "FastLineChart"
+  },
+  "android": {
+    "androidNamespace": ["fastlinechart"],
+    "androidCxxLibName": "fastlinechart"
+  },
+  "autolinking": {
+    "FastLineChart": {
+      "ios": {
+        "language": "swift",
+        "implementationClassName": "HybridFastLineChart"
+      },
+      "android": {
+        "language": "kotlin",
+        "implementationClassName": "HybridFastLineChart"
+      }
+    }
+  },
+  "ignorePaths": ["node_modules"]
+}
