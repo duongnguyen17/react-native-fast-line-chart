@@ -89,7 +89,14 @@ android {
   }
 }
 
+repositories {
+  google()
+  mavenCentral()
+  maven { url 'https://jitpack.io' }
+}
+
 dependencies {
   implementation "com.facebook.react:react-android"
   implementation project(":react-native-nitro-modules")
+  implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
 }

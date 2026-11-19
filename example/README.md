@@ -1,5 +1,25 @@
 This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
 
+## Migrating a price chart
+
+`src/adapt-price-chart.ts` shows how to migrate a chart that already builds
+wrapper datasets, date labels, a left price axis, and processed theme colors.
+The adapter converts numeric ARGB colors to the native chart's hex strings and
+sets a label threshold that includes every comparison line and marker.
+
+```tsx
+import { FastLineChartView } from '@2security/fast-line-chart';
+import { adaptPriceChart } from './src/adapt-price-chart';
+
+<FastLineChartView
+  style={{ flex: 1 }}
+  {...adaptPriceChart(themedWrapperChart)}
+  onSelectPoint={({ x, pixelX, pixelY }) => {
+    showPriceTooltip(Math.round(x), pixelX, pixelY);
+  }}
+/>;
+```
+
 # Getting Started
 
 > **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.

@@ -1,0 +1,490 @@
+diff --git a/package.json b/package.json
+--- a/package.json
++++ b/package.json
+@@ -24,6 +24,7 @@
+     "gen-splash": "node scripts/generate-splash.js"
+   },
+   "dependencies": {
++    "@2security/fast-line-chart": "file:vendor/2security-fast-line-chart-0.1.0.tgz",
+     "@2security/lunar-date-picker": "^1.3.2",
+     "@expo-google-fonts/be-vietnam-pro": "^0.4.1",
+     "@expo-google-fonts/jetbrains-mono": "^0.4.1",
+@@ -79,7 +80,6 @@
+     "react-i18next": "^18.0.1",
+     "react-native": "0.88.1",
+     "react-native-bootsplash": "^7.3.5",
+-    "react-native-charts-wrapper": "^0.7.0",
+     "react-native-check-version": "^1.5.0",
+     "react-native-config": "^1.7.2",
+     "react-native-device-info": "^15.0.2",
+@@ -128,7 +128,6 @@
+     "@types/jest": "^29.5.13",
+     "@types/lodash.throttle": "^4.1.9",
+     "@types/react": "^19.3.0",
+-    "@types/react-native-charts-wrapper": "^0.5.11",
+     "@types/text-encoding": "^0.0.40",
+     "@types/ws": "^8.5.4",
+     "@types/xdate": "^0.8.32",
+diff --git a/patches/react-native-charts-wrapper+0.7.0.patch b/patches/react-native-charts-wrapper+0.7.0.patch
+deleted file mode 100644
+--- a/patches/react-native-charts-wrapper+0.7.0.patch
++++ /dev/null
+@@ -1,142 +0,0 @@
+-diff --git a/node_modules/react-native-charts-wrapper/README.md b/node_modules/react-native-charts-wrapper/README.md
+-index d205441..8b9e877 100644
+---- a/node_modules/react-native-charts-wrapper/README.md
+-+++ b/node_modules/react-native-charts-wrapper/README.md
+-@@ -256,3 +256,15 @@ Permission is hereby granted, free of charge, to any person obtaining a copy of
+- The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+-
+- THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+-+
+-+### Consecutive line value labels
+-+
+-+For `LineChart`, set `config.hideConsecutiveDuplicateValues: true` together
+-+with an x-indexed `config.valueFormatter` string array. Adjacent identical,
+-+non-empty labels keep only their first label. Empty labels break a run, so a
+-+later run gets its own label. This also works with individual marker datasets
+-+sharing the same formatter array. Points, circles, selection, axis labels and
+-+other datasets are unchanged. Disabled by default.
+-+
+-+The JS adapter prepares immutable chart data once per data reference and shares
+-+processed formatter arrays. No per-frame work or native rebuild is required.
+-diff --git a/node_modules/react-native-charts-wrapper/android/src/main/java/com/github/wuxudong/rncharts/listener/RNOnChartValueSelectedListener.java b/node_modules/react-native-charts-wrapper/android/src/main/java/com/github/wuxudong/rncharts/listener/RNOnChartValueSelectedListener.java
+-index d43d493..b80b70d 100644
+---- a/node_modules/react-native-charts-wrapper/android/src/main/java/com/github/wuxudong/rncharts/listener/RNOnChartValueSelectedListener.java
+-+++ b/node_modules/react-native-charts-wrapper/android/src/main/java/com/github/wuxudong/rncharts/listener/RNOnChartValueSelectedListener.java
+-@@ -1,6 +1,7 @@
+- package com.github.wuxudong.rncharts.listener;
+-
+- import com.facebook.react.bridge.ReactContext;
+-+import com.facebook.react.bridge.WritableMap;
+- import com.facebook.react.uimanager.events.RCTEventEmitter;
+- import com.github.mikephil.charting.charts.Chart;
+- import com.github.mikephil.charting.data.Entry;
+-@@ -27,11 +28,18 @@ public class RNOnChartValueSelectedListener implements OnChartValueSelectedListe
+-         if (mWeakChart != null) {
+-             Chart chart = mWeakChart.get();
+-
+-+            WritableMap map = EntryToWritableMapUtils.convertEntryToWritableMap(entry);
+-+            // Thêm pixel coordinates — MPAndroidChart đã tính sẵn trong Highlight object
+-+            if (map != null && h != null) {
+-+                map.putDouble("pixelX", com.facebook.react.uimanager.PixelUtil.toDIPFromPixel(h.getXPx()));
+-+                map.putDouble("pixelY", com.facebook.react.uimanager.PixelUtil.toDIPFromPixel(h.getYPx()));
+-+            }
+-+
+-             ReactContext reactContext = (ReactContext) chart.getContext();
+-             reactContext.getJSModule(RCTEventEmitter.class).receiveEvent(
+-                     chart.getId(),
+-                     "topSelect",
+--                    EntryToWritableMapUtils.convertEntryToWritableMap(entry));
+-+                    map);
+-         }
+-     }
+-
+-diff --git a/node_modules/react-native-charts-wrapper/ios/ReactNativeCharts/RNChartViewBase.swift b/node_modules/react-native-charts-wrapper/ios/ReactNativeCharts/RNChartViewBase.swift
+-index 979ef45..09ca4cf 100644
+---- a/node_modules/react-native-charts-wrapper/ios/ReactNativeCharts/RNChartViewBase.swift
+-+++ b/node_modules/react-native-charts-wrapper/ios/ReactNativeCharts/RNChartViewBase.swift
+-@@ -508,8 +508,11 @@ open class RNChartViewBase: UIView, ChartViewDelegate {
+-         if self.onSelect == nil {
+-             return
+-         } else {
+--            self.onSelect!(EntryToDictionaryUtils.entryToDictionary(entry))
+--
+-+            var dict = EntryToDictionaryUtils.entryToDictionary(entry)
+-+            // Thêm pixel coordinates — DGCharts đã tính sẵn trong Highlight object
+-+            dict["pixelX"] = highlight.xPx
+-+            dict["pixelY"] = highlight.yPx
+-+            self.onSelect!(dict)
+-         }
+-     }
+-
+-diff --git a/node_modules/react-native-charts-wrapper/lib/ChartDataConfig.js b/node_modules/react-native-charts-wrapper/lib/ChartDataConfig.js
+-index 97e5b84..0d0e656 100644
+---- a/node_modules/react-native-charts-wrapper/lib/ChartDataConfig.js
+-+++ b/node_modules/react-native-charts-wrapper/lib/ChartDataConfig.js
+-@@ -26,6 +26,7 @@ const lineData = PropTypes.shape({
+-         ...ChartDataSetConfig.lineScatterCandleRadar,
+-         ...ChartDataSetConfig.lineRadar,
+-
+-+        hideConsecutiveDuplicateValues: PropTypes.bool,
+-         circleRadius: PropTypes.number,
+-         drawCircles: PropTypes.bool,
+-         mode: PropTypes.oneOf([
+-diff --git a/node_modules/react-native-charts-wrapper/lib/LineChart.js b/node_modules/react-native-charts-wrapper/lib/LineChart.js
+-index 940266e..122ea0f 100644
+---- a/node_modules/react-native-charts-wrapper/lib/LineChart.js
+-+++ b/node_modules/react-native-charts-wrapper/lib/LineChart.js
+-@@ -7,6 +7,7 @@ import {
+-
+- import BarLineChartBase from './BarLineChartBase';
+- import {lineData} from './ChartDataConfig';
+-+import prepareLineChartData from './prepareLineChartData';
+- import MoveEnhancer from './MoveEnhancer'
+- import ScaleEnhancer from "./ScaleEnhancer";
+- import HighlightEnhancer from "./HighlightEnhancer";
+-@@ -22,7 +23,7 @@ class LineChart extends React.Component {
+-   }
+-
+-   render() {
+--    return <RNLineChart {...this.props} ref={ref => this.nativeComponentRef = ref} />;
+-+    return <RNLineChart {...this.props} data={prepareLineChartData(this.props.data)} ref={ref => this.nativeComponentRef = ref} />;
+-   }
+- }
+-
+-diff --git a/node_modules/react-native-charts-wrapper/lib/prepareLineChartData.js b/node_modules/react-native-charts-wrapper/lib/prepareLineChartData.js
+-new file mode 100644
+-index 0000000..e3d08c4
+---- /dev/null
+-+++ b/node_modules/react-native-charts-wrapper/lib/prepareLineChartData.js
+-@@ -0,0 +1,33 @@
+-+const preparedData = new WeakMap();
+-+
+-+// Formatter arrays are indexed by x, even when each marker is its own dataset.
+-+// Compare the source labels so a run of three or more keeps only its first.
+-+export default function prepareLineChartData(data) {
+-+  if (!data || !Array.isArray(data.dataSets)) return data;
+-+  if (preparedData.has(data)) return preparedData.get(data);
+-+
+-+  const preparedFormatters = new Map();
+-+  let changed = false;
+-+  const dataSets = data.dataSets.map(dataSet => {
+-+    const config = dataSet.config;
+-+    if (!config || !config.hideConsecutiveDuplicateValues ||
+-+        !Array.isArray(config.valueFormatter)) return dataSet;
+-+
+-+    const source = config.valueFormatter;
+-+    let formatter = preparedFormatters.get(source);
+-+    if (!formatter) {
+-+      formatter = source.map((label, index) =>
+-+        label !== '' && index > 0 && label === source[index - 1] ? '' : label
+-+      );
+-+      preparedFormatters.set(source, formatter);
+-+    }
+-+
+-+    const {hideConsecutiveDuplicateValues, ...nativeConfig} = config;
+-+    changed = true;
+-+    return {...dataSet, config: {...nativeConfig, valueFormatter: formatter}};
+-+  });
+-+
+-+  const result = changed ? {...data, dataSets} : data;
+-+  preparedData.set(data, result);
+-+  return result;
+-+}
+diff --git a/src/features/travel-search/components/adapt-price-chart.ts b/src/features/travel-search/components/adapt-price-chart.ts
+new file mode 100644
+--- /dev/null
++++ b/src/features/travel-search/components/adapt-price-chart.ts
+@@ -0,0 +1,100 @@
++import type { processColor } from 'react-native';
++import type {
++  ExtraOffsets,
++  LineChartConfig,
++  LineChartDataSet,
++  LineDataSetConfig,
++  LineXAxisConfig,
++  LineYAxisConfig,
++} from '@2security/fast-line-chart';
++
++type WrapperColor = ReturnType<typeof processColor>;
++type DataSetColorKey =
++  'color' | 'circleColor' | 'circleHoleColor' | 'valueTextColor' | 'fillColor';
++type AxisColorKey = 'axisLineColor' | 'gridColor' | 'textColor';
++type WithWrapperColors<T, K extends keyof T> = Omit<T, K> &
++  Partial<Record<K, WrapperColor>>;
++
++type WrapperDataSet = Omit<LineChartDataSet, 'config'> & {
++  config?: WithWrapperColors<LineDataSetConfig, DataSetColorKey>;
++};
++
++export interface WrapperPriceChart {
++  data: { dataSets: WrapperDataSet[] };
++  xAxis: WithWrapperColors<LineXAxisConfig, AxisColorKey>;
++  yAxis: { left: WithWrapperColors<LineYAxisConfig, AxisColorKey> };
++  extraOffsets?: ExtraOffsets;
++  animation?: { durationX?: number };
++  maxVisibleValueCount?: number;
++}
++
++function toHex(color: WrapperColor | undefined): string | undefined {
++  if (typeof color !== 'number') return undefined;
++  return `#${(color >>> 0).toString(16).padStart(8, '0')}`;
++}
++
++function adaptAxis<
++  T extends {
++    axisLineColor?: WrapperColor;
++    gridColor?: WrapperColor;
++    textColor?: WrapperColor;
++  },
++>({ axisLineColor, gridColor, textColor, ...axis }: T) {
++  return {
++    ...axis,
++    axisLineColor: toHex(axisLineColor),
++    gridColor: toHex(gridColor),
++    textColor: toHex(textColor),
++  };
++}
++
++export function adaptPriceChart(chart: WrapperPriceChart): {
++  config: LineChartConfig;
++  dataSets: LineChartDataSet[];
++} {
++  const dataSets = chart.data.dataSets.map((set) => {
++    if (!set.config) return { values: set.values, label: set.label };
++    const {
++      color,
++      circleColor,
++      circleHoleColor,
++      valueTextColor,
++      fillColor,
++      ...config
++    } = set.config;
++    return {
++      ...set,
++      config: {
++        ...config,
++        color: toHex(color),
++        circleColor: toHex(circleColor),
++        circleHoleColor: toHex(circleHoleColor),
++        valueTextColor: toHex(valueTextColor),
++        fillColor: toHex(fillColor),
++      },
++    };
++  });
++
++  const entryCount = dataSets.reduce(
++    (total, set) => total + set.values.length,
++    0
++  );
++  return {
++    config: {
++      xAxis: adaptAxis(chart.xAxis),
++      yAxis: adaptAxis(chart.yAxis.left),
++      extraOffsets: chart.extraOffsets,
++      animationDurationX: chart.animation?.durationX,
++      maxVisibleValueCount:
++        chart.maxVisibleValueCount ?? Math.max(100, entryCount + 1),
++      noDataText: '',
++      legendEnabled: false,
++      autoScroll: false,
++      pinchZoom: true,
++      dragEnabled: true,
++      scaleXEnabled: true,
++      scaleYEnabled: false,
++    },
++    dataSets,
++  };
++}
+diff --git a/src/features/travel-search/components/cheapest-price-chart.tsx b/src/features/travel-search/components/cheapest-price-chart.tsx
+--- a/src/features/travel-search/components/cheapest-price-chart.tsx
++++ b/src/features/travel-search/components/cheapest-price-chart.tsx
+@@ -3,13 +3,16 @@
+ import isEqual from 'react-fast-compare';
+ import { processColor } from 'react-native';
+ import {
+-  LineChart,
+-  type ChartSelectEvent,
+-  type LineChartProps,
+-} from 'react-native-charts-wrapper';
++  FastLineChartView,
++  type ExtraOffsets,
++  type FastLineChartViewProps,
++  type SelectedPoint,
++} from '@2security/fast-line-chart';
+ import { useCSSVariable, withUniwind } from 'uniwind';
+ 
+-const StyledLineChart = withUniwind(LineChart);
++import { adaptPriceChart } from './adapt-price-chart';
++
++const StyledLineChart = withUniwind(FastLineChartView);
+ 
+ const EXTRA_OFFSETS = { left: 0, top: 48, right: 20, bottom: 10 };
+ 
+@@ -155,7 +158,9 @@
+ type CheapestPriceChartProps = {
+   chartConfig: CheapestChartConfig | null;
+   lineTransport?: 'flight' | 'train' | 'bus' | 'compare';
+-} & Omit<LineChartProps, 'data' | 'xAxis' | 'yAxis'>;
++  extraOffsets?: ExtraOffsets;
++  maxVisibleValueCount?: number;
++} & Pick<FastLineChartViewProps, 'onSelectPoint'>;
+ 
+ const EMPTY_CHART_CONFIG: CheapestChartConfig = {
+   data: { dataSets: [] },
+@@ -182,7 +187,9 @@
+   ({
+     chartConfig,
+     lineTransport = 'train',
+-    ...props
++    extraOffsets = EXTRA_OFFSETS,
++    maxVisibleValueCount,
++    onSelectPoint,
+   }: CheapestPriceChartProps) => {
+     const [flight, train, bus, lowest, highest, card, axis, label, grid] =
+       useCSSVariable([
+@@ -261,23 +268,22 @@
+         train,
+       ],
+     );
++    const nativeChart = useMemo(
++      () =>
++        adaptPriceChart({
++          ...themedConfig,
++          extraOffsets,
++          maxVisibleValueCount,
++          animation: { durationX: 500 },
++        }),
++      [themedConfig, extraOffsets, maxVisibleValueCount],
++    );
++
+     return (
+       <StyledLineChart
+         className="w-full flex-1 self-stretch"
+-        noDataText=""
+-        legend={{ enabled: false }}
+-        marker={{ enabled: false }}
+-        pinchZoom={true}
+-        dragEnabled={true}
+-        scaleXEnabled={true}
+-        scaleYEnabled={false}
+-        autoScaleMinMaxEnabled={false}
+-        animation={{ durationX: 500 }}
+-        extraOffsets={EXTRA_OFFSETS}
+-        {...props}
+-        data={themedConfig.data}
+-        xAxis={themedConfig.xAxis}
+-        yAxis={themedConfig.yAxis}
++        {...nativeChart}
++        onSelectPoint={onSelectPoint}
+       />
+     );
+   },
+@@ -286,9 +292,4 @@
+ 
+ CheapestPriceChart.displayName = 'CheapestPriceChart';
+ 
+-export type ChartSelectionNativeEvent =
+-  | (NonNullable<ChartSelectEvent['nativeEvent']> & {
+-      pixelX?: number;
+-      pixelY?: number;
+-    })
+-  | null;
++export type ChartSelectionNativeEvent = SelectedPoint | null;
+diff --git a/src/features/travel-search/components/cheapest-price-frame.tsx b/src/features/travel-search/components/cheapest-price-frame.tsx
+--- a/src/features/travel-search/components/cheapest-price-frame.tsx
++++ b/src/features/travel-search/components/cheapest-price-frame.tsx
+@@ -35,7 +35,7 @@
+   type StyleProp,
+   type ViewStyle,
+ } from 'react-native';
+-import type { ChartSelectEvent } from 'react-native-charts-wrapper';
++import type { SelectedPoint } from '@2security/fast-line-chart';
+ import type { Gesture } from 'react-native-gesture-handler';
+ import Animated, {
+   FadeIn,
+@@ -48,7 +48,6 @@
+ import { useSafeAreaInsets } from 'react-native-safe-area-context';
+ import {
+   CheapestPriceChart,
+-  type ChartSelectionNativeEvent,
+   type CheapestChartConfig,
+ } from './cheapest-price-chart';
+ import { CheapestPriceTooltip } from './cheapest-price-tooltip';
+@@ -251,16 +250,7 @@
+   };
+ 
+   const handleChartSelect = useCallback(
+-    (event: ChartSelectEvent) => {
+-      const nativeEvent = event.nativeEvent as ChartSelectionNativeEvent;
+-
+-      // The native chart can clear its highlight when its dataset is replaced.
+-      // Only an explicit tooltip close or a new valid selection changes our snapshot.
+-      if (nativeEvent == null) return;
+-
+-      const { x, pixelX, pixelY } = nativeEvent;
+-      if (x === undefined) return;
+-
++    ({ x, pixelX, pixelY }: SelectedPoint) => {
+       const dataIndex = Math.round(x);
+       const dataPoint = displayData[dataIndex];
+ 
+@@ -270,8 +260,8 @@
+           fullDate: dataPoint.date,
+           price: dataPoint.value / 1000000,
+           rawPrice: dataPoint.value,
+-          pixelX: (pixelX ?? 0) + insets.left,
+-          pixelY: pixelY ?? 0,
++          pixelX: pixelX + insets.left,
++          pixelY,
+           providers: dataPoint.providers,
+         };
+         if (onGraphPointPress) {
+@@ -417,7 +407,7 @@
+             <CheapestPriceChart
+               chartConfig={chartConfig}
+               lineTransport={lineTransport}
+-              onSelect={handleChartSelect}
++              onSelectPoint={handleChartSelect}
+               {...(isExpanded
+                 ? { extraOffsets: priceChartExtraOffsets }
+                 : adaptiveFlightLayout
+diff --git a/src/features/compare/components/compare-cheapest-price-frame.tsx b/src/features/compare/components/compare-cheapest-price-frame.tsx
+--- a/src/features/compare/components/compare-cheapest-price-frame.tsx
++++ b/src/features/compare/components/compare-cheapest-price-frame.tsx
+@@ -5,7 +5,6 @@
+ import { GradientBlurOverlay, NativeButton, TransportIcon } from '@components';
+ import {
+   CheapestPriceChart,
+-  type ChartSelectionNativeEvent,
+   type CheapestChartConfig,
+ } from '@features/travel-search/components/cheapest-price-chart';
+ import { CheapestPriceTooltip } from '@features/travel-search/components/cheapest-price-tooltip';
+@@ -19,7 +18,7 @@
+ import isEqual from 'react-fast-compare';
+ import { useTranslation } from 'react-i18next';
+ import { ActivityIndicator, Text, View } from 'react-native';
+-import type { ChartSelectEvent } from 'react-native-charts-wrapper';
++import type { SelectedPoint } from '@2security/fast-line-chart';
+ import { useSafeAreaInsets } from 'react-native-safe-area-context';
+ import { useCSSVariable } from 'uniwind';
+ import type {
+@@ -146,16 +145,7 @@
+     );
+ 
+     const handleChartSelect = useCallback(
+-      (event: ChartSelectEvent) => {
+-        const nativeEvent = event.nativeEvent as ChartSelectionNativeEvent;
+-
+-        // A streaming dataset update can clear the native highlight. Keep the
+-        // selected snapshot visible until the user closes it or selects a point.
+-        if (nativeEvent == null) return;
+-
+-        const { x, pixelX, pixelY } = nativeEvent;
+-        if (x === undefined) return;
+-
++      ({ x, pixelX, pixelY }: SelectedPoint) => {
+         const dataIndex = Math.round(x);
+         const dataPoint = displayData[dataIndex];
+ 
+@@ -166,8 +156,8 @@
+           fullDate: dataPoint.date,
+           price: dataPoint.value / 1_000_000,
+           rawPrice: dataPoint.value,
+-          pixelX: (pixelX ?? 0) + insets.left,
+-          pixelY: (pixelY ?? 0) + (isExpanded ? 0 : toolbarHeight),
++          pixelX: pixelX + insets.left,
++          pixelY: pixelY + (isExpanded ? 0 : toolbarHeight),
+           providers: dataPoint.providers,
+         });
+         setHasOpenedExpandedSession(false);
+@@ -296,7 +286,7 @@
+             chartConfig={chartConfig}
+             lineTransport="compare"
+             maxVisibleValueCount={maxVisibleValueCount}
+-            onSelect={handleChartSelect}
++            onSelectPoint={handleChartSelect}
+             extraOffsets={priceChartExtraOffsets}
+           />
+           {!chartConfig && (

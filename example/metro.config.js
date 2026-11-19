@@ -13,7 +13,7 @@ const root = path.resolve(__dirname, '..');
 const config = withMetroConfig(getDefaultConfig(__dirname), {
   root,
   dirname: __dirname,
-  conditions: ['react-native-fast-line-chart-source'],
+  conditions: ['@2security/fast-line-chart-source', 'source'],
 });
 
 module.exports = config;

@@ -21,6 +21,7 @@ Pod::Spec.new do |s|
 
   s.dependency 'React-jsi'
   s.dependency 'React-callinvoker'
+  s.dependency 'DGCharts', '~> 5.0.0'
 
   load 'nitrogen/generated/ios/FastLineChart+autolinking.rb'
   add_nitrogen_files(s)

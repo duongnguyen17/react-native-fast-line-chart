@@ -1,3 +1,5 @@
 *.pbxproj -text
 # specific for windows script files
 *.bat text eol=crlf
+# Unified diffs contain single-space context lines for blank lines.
+docs/*.patch whitespace=-blank-at-eol

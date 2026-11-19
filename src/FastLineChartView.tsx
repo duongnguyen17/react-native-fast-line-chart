@@ -1,11 +1,19 @@
-import type { ViewProps } from 'react-native';
+import { forwardRef } from 'react';
+import type {
+  FastLineChartRef,
+  FastLineChartViewProps,
+} from './FastLineChartView.types';
 
-type Props = ViewProps & {
-  color: string;
-};
+export type {
+  FastLineChartRef,
+  FastLineChartViewProps,
+} from './FastLineChartView.types';
 
-export function FastLineChartView(_props: Props): never {
+export const FastLineChartView = forwardRef<
+  FastLineChartRef,
+  FastLineChartViewProps
+>(function FastLineChartViewImpl(_props, _ref): never {
   throw new Error(
-    "'react-native-fast-line-chart' is only supported on native platforms."
+    "'@2security/fast-line-chart' is only supported on native platforms (iOS and Android)."
   );
-}
+});
