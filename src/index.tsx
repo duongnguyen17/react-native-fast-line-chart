@@ -2,6 +2,12 @@ import {
   FastLineChartView,
   type FastLineChartViewProps,
   type FastLineChartRef,
+  type ChartColor,
+  type LineDataSetConfig,
+  type LineChartDataSet,
+  type LineChartConfig,
+  type LineXAxisConfig,
+  type LineYAxisConfig,
 } from './FastLineChartView';
 import type {
   FastLineChartProps,
@@ -9,11 +15,6 @@ import type {
   Point,
   SelectedPoint,
   ExtraOffsets,
-  LineDataSetConfig,
-  LineChartDataSet,
-  LineChartConfig,
-  LineXAxisConfig,
-  LineYAxisConfig,
 } from './FastLineChart.nitro';
 
 export { FastLineChartView };
@@ -22,6 +23,7 @@ export type {
   FastLineChartRef,
   FastLineChartProps,
   FastLineChartMethods,
+  ChartColor,
   Point,
   SelectedPoint,
   ExtraOffsets,

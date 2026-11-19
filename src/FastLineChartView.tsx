@@ -7,6 +7,12 @@ import type {
 export type {
   FastLineChartRef,
   FastLineChartViewProps,
+  ChartColor,
+  LineDataSetConfig,
+  LineChartDataSet,
+  LineChartConfig,
+  LineXAxisConfig,
+  LineYAxisConfig,
 } from './FastLineChartView.types';
 
 export const FastLineChartView = forwardRef<

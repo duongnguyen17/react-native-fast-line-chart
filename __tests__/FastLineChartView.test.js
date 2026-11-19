@@ -6,11 +6,11 @@ const babel = require('@babel/core');
 // Exercise the public wrapper without a native runtime. The mocked host exposes
 // the same hybridRef callback Nitro uses to supply the native instance.
 function renderChart(props = {}) {
-  const nativeRef = { current: null };
   const publicRef = { current: null };
   const react = {
     forwardRef: (render) => render,
-    useRef: () => nativeRef,
+    useRef: (initial) => ({ current: initial ?? null }),
+    useCallback: (fn) => fn,
     useMemo: (factory) => factory(),
     useImperativeHandle: (ref, factory) => {
       ref.current = factory();
@@ -34,6 +34,10 @@ function renderChart(props = {}) {
   const exports = {};
   const requireMock = (id) => {
     if (id === 'react') return react;
+    if (id === 'react-native')
+      return {
+        processColor: (c) => (typeof c === 'number' ? c : 0xff007aff),
+      };
     if (id === 'react/jsx-runtime')
       return { jsx: (type, p) => ({ type, props: p }) };
     if (id === 'react-native-nitro-modules') return nitro;
@@ -100,4 +104,45 @@ test('forwards imperative calls to the attached native instance and tolerates de
   element.props.hybridRef(null);
   expect(() => ref.appendPoint(1, 2)).not.toThrow();
   expect(native.appendPoint).toHaveBeenCalledTimes(1);
+});
+
+test('queues imperative calls made before native attachment and flushes on attach', () => {
+  const { element, ref } = renderChart();
+  const native = {
+    setChartDataSets: jest.fn(),
+  };
+  const sets = [{ values: [{ x: 1, y: 10 }] }];
+  // Called before element.props.hybridRef is invoked:
+  ref.setDataSets(sets);
+  expect(native.setChartDataSets).not.toHaveBeenCalled();
+
+  // Native attaches:
+  element.props.hybridRef(native);
+  expect(native.setChartDataSets).toHaveBeenCalledTimes(1);
+  expect(native.setChartDataSets).toHaveBeenCalledWith(sets);
+});
+
+test('normalizes string and number colors to hex for native host', () => {
+  const config = {
+    lineColor: 0xff007aff, // number (ARGB integer from processColor)
+    backgroundColor: '#ffffff', // hex string
+    xAxis: {
+      textColor: 0xff8e8e93,
+    },
+  };
+  const dataSets = [
+    {
+      values: [{ x: 1, y: 2 }],
+      config: {
+        circleColor: 0xff34c759,
+        circleHoleColor: '#ffffff',
+      },
+    },
+  ];
+  const { element } = renderChart({ config, dataSets });
+  expect(element.props.config.lineColor).toBe('#ff007aff');
+  expect(element.props.config.backgroundColor).toBe('#ffffff');
+  expect(element.props.config.xAxis.textColor).toBe('#ff8e8e93');
+  expect(element.props.dataSets[0].config.circleColor).toBe('#ff34c759');
+  expect(element.props.dataSets[0].config.circleHoleColor).toBe('#ffffff');
 });

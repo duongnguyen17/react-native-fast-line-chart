@@ -281,7 +281,7 @@ class HybridFastLineChart: HybridFastLineChartSpec {
   }
 
   private func applySingleMode(_ set: DGCharts.LineChartDataSet) {
-    switch set.entryCount < 2 ? "LINEAR" : config?.mode?.uppercased() {
+    switch set.count < 2 ? "LINEAR" : config?.mode?.uppercased() {
     case "CUBIC_BEZIER":
       set.mode = .cubicBezier
     case "STEPPED":
@@ -331,7 +331,7 @@ class HybridFastLineChart: HybridFastLineChartSpec {
       set.valueFormatter = DataSetValueFormatter(labels: formatter, hideConsecutiveDuplicates: hideDuplicates)
     }
 
-    switch set.entryCount < 2 ? "LINEAR" : cfg?.mode?.uppercased() {
+    switch set.count < 2 ? "LINEAR" : cfg?.mode?.uppercased() {
     case "CUBIC_BEZIER":
       set.mode = .cubicBezier
     case "STEPPED":
@@ -363,10 +363,10 @@ class HybridFastLineChart: HybridFastLineChartSpec {
       let set = self.getOrCreateSingleDataSet()
 
       let entry = ChartDataEntry(x: x, y: y)
-      _ = set.append(entry)
+      set.append(entry)
 
-      if let max = maxPoints, max.isFinite, max >= 1, max < Double(Int.max), set.entryCount > Int(max) {
-        let excess = set.entryCount - Int(max)
+      if let max = maxPoints, max.isFinite, max >= 1, max < Double(Int.max), set.count > Int(max) {
+        let excess = set.count - Int(max)
         set.removeFirst(excess)
       }
 
@@ -386,12 +386,12 @@ class HybridFastLineChart: HybridFastLineChartSpec {
       var lastX = points.last!.x
       for pt in points {
         let entry = ChartDataEntry(x: pt.x, y: pt.y)
-        _ = set.append(entry)
+        set.append(entry)
         lastX = pt.x
       }
 
-      if let max = maxPoints, max.isFinite, max >= 1, max < Double(Int.max), set.entryCount > Int(max) {
-        let excess = set.entryCount - Int(max)
+      if let max = maxPoints, max.isFinite, max >= 1, max < Double(Int.max), set.count > Int(max) {
+        let excess = set.count - Int(max)
         set.removeFirst(excess)
       }
 
@@ -465,7 +465,7 @@ class HybridFastLineChart: HybridFastLineChartSpec {
       guard let self = self else { return }
       self.displayLink?.isPaused = true
       self.needsRedraw = false
-      self.singleDataSet?.clear()
+      self.singleDataSet?.removeAll(keepingCapacity: false)
       self.singleDataSet = nil
       self.chartView.highlightValues(nil)
       self.chartView.data = nil
