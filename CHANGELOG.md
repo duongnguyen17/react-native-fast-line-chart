@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-11-20
+
+### Fixed
+
+- **Android (Bezier Curve Rendering)**: Fixed an issue in MPAndroidChart where `mRenderPaint` alpha was left at 0 after drawing datasets with transparent colors (e.g. marker-only datasets), rendering off-screen bezier bitmaps invisible. Introduced `SafeLineChartRenderer` to restore `mRenderPaint.alpha = 255` after rendering each dataset.
+
+## [0.1.2] - 2026-11-20
+
+### Added
+
+- **Dataset Revisions**: Exposed `datasetRevision` on point selection events (`onSelectPoint`) across iOS and Android, allowing consumers to distinguish selection events across dataset updates.
+
+### Documentation
+
+- Refreshed package documentation guide and added platform visual previews (`ios.gif`, `android.gif`).
+
 ## [0.1.1] - 2026-11-19
 
 ### Added
@@ -39,6 +55,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[Unreleased]: https://github.com/duongnguyen17/react-native-fast-line-chart/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/duongnguyen17/react-native-fast-line-chart/compare/v0.1.3...HEAD
+[0.1.3]: https://github.com/duongnguyen17/react-native-fast-line-chart/compare/v0.1.2...v0.1.3
+[0.1.2]: https://github.com/duongnguyen17/react-native-fast-line-chart/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/duongnguyen17/react-native-fast-line-chart/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/duongnguyen17/react-native-fast-line-chart/releases/tag/v0.1.0
