@@ -18,6 +18,11 @@ import com.github.mikephil.charting.formatter.ValueFormatter
 import com.github.mikephil.charting.highlight.Highlight
 import com.github.mikephil.charting.listener.OnChartValueSelectedListener
 import com.github.mikephil.charting.renderer.LineChartRenderer
+import android.graphics.Canvas
+import com.github.mikephil.charting.animation.ChartAnimator
+import com.github.mikephil.charting.interfaces.dataprovider.LineDataProvider
+import com.github.mikephil.charting.interfaces.datasets.ILineDataSet
+import com.github.mikephil.charting.utils.ViewPortHandler
 import java.util.concurrent.atomic.AtomicBoolean
 import java.text.DecimalFormat
 
@@ -50,6 +55,25 @@ private class DataSetValueFormatter(
   }
 }
 
+// MARK: - Safe Line Chart Renderer
+
+@Keep
+private class SafeLineChartRenderer(
+  chart: LineDataProvider,
+  animator: ChartAnimator,
+  viewPortHandler: ViewPortHandler
+) : LineChartRenderer(chart, animator, viewPortHandler) {
+  override fun drawDataSet(canvas: Canvas, dataSet: ILineDataSet) {
+    super.drawDataSet(canvas, dataSet)
+    // MPAndroidChart bug fix: LineChartRenderer.drawData reuses mRenderPaint to draw the
+    // off-screen bitmap for bezier curves (HORIZONTAL_BEZIER / CUBIC_BEZIER).
+    // If subsequent datasets (e.g. marker-only datasets) use transparent color (#00000000),
+    // mRenderPaint's alpha is left at 0, making the entire bitmap invisible when drawn.
+    // Restoring mRenderPaint's alpha to 255 ensures the bitmap is always rendered at 100% opacity.
+    mRenderPaint.alpha = 255
+  }
+}
+
 // MARK: - Main Hybrid View
 
 @DoNotStrip
@@ -67,6 +91,7 @@ class HybridFastLineChart(val context: ThemedReactContext) : HybridFastLineChart
     setPinchZoom(true)
     setDrawGridBackground(false)
     setNoDataText("No chart data available")
+    renderer = SafeLineChartRenderer(this, animator, viewPortHandler)
   }
 
   private val chartView: LineChart
@@ -159,7 +184,7 @@ class HybridFastLineChart(val context: ThemedReactContext) : HybridFastLineChart
   private fun resetDataRenderer() {
     // LineChartRenderer retains per-dataset circle caches, and initBuffers() does not clear them.
     (chartView.renderer as? LineChartRenderer)?.releaseBitmap()
-    chartView.renderer = LineChartRenderer(chartView, chartView.animator, chartView.viewPortHandler)
+    chartView.renderer = SafeLineChartRenderer(chartView, chartView.animator, chartView.viewPortHandler)
   }
 
   private fun getOrCreateSingleDataSet(): LineDataSet {
