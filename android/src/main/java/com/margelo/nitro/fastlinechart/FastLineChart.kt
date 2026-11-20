@@ -132,6 +132,7 @@ class HybridFastLineChart(val context: ThemedReactContext) : HybridFastLineChart
     }
 
   override var onSelectPoint: ((point: SelectedPoint) -> Unit)? = null
+  private var dataRevisions: List<Double?> = emptyList()
 
   private fun runOnMain(block: () -> Unit) {
     if (Looper.myLooper() == Looper.getMainLooper()) {
@@ -352,6 +353,7 @@ class HybridFastLineChart(val context: ThemedReactContext) : HybridFastLineChart
       this.singleDataSet = set
 
       val data = LineData(set)
+      dataRevisions = emptyList()
       chartView.data = data
 
       config?.visibleRangeX?.let {
@@ -386,6 +388,7 @@ class HybridFastLineChart(val context: ThemedReactContext) : HybridFastLineChart
       val data = LineData(nativeSets.toList())
       singleDataSet = null
       chartView.highlightValues(null)
+      dataRevisions = dataSets.map { it.dataRevision }
       chartView.data = data
 
       config?.visibleRangeX?.let {
@@ -410,6 +413,7 @@ class HybridFastLineChart(val context: ThemedReactContext) : HybridFastLineChart
       resetDataRenderer()
       singleDataSet?.clear()
       singleDataSet = null
+      dataRevisions = emptyList()
       chartView.highlightValues(null)
       chartView.data = null
       chartView.notifyDataSetChanged()
@@ -518,7 +522,8 @@ class HybridFastLineChart(val context: ThemedReactContext) : HybridFastLineChart
         pixelX = pixelX,
         pixelY = pixelY,
         dataIndex = chartView.data?.getDataSetByIndex(h.dataSetIndex)?.getEntryIndex(e)?.toDouble(),
-        dataSetIndex = h.dataSetIndex.toDouble()
+        dataSetIndex = h.dataSetIndex.toDouble(),
+        dataRevision = dataRevisions.getOrNull(h.dataSetIndex)
       )
       onSelectPoint?.invoke(selected)
     }

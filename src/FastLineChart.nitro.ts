@@ -16,6 +16,7 @@ export interface SelectedPoint {
   pixelY: number;
   dataIndex?: number;
   dataSetIndex?: number;
+  dataRevision?: number;
 }
 
 export interface ExtraOffsets {
@@ -50,6 +51,7 @@ export interface LineChartDataSet {
   values: Point[];
   label?: string;
   config?: LineDataSetConfig;
+  dataRevision?: number;
 }
 
 interface LineAxisStyle {

@@ -63,7 +63,7 @@ test('forwards provided props and selection events to the host', () => {
     expect.objectContaining({ config, initialPoints: points, testID: 'chart' })
   );
   expect(element.props).not.toHaveProperty('dataSets');
-  const point = { x: 1, y: 2, pixelX: 3, pixelY: 4 };
+  const point = { x: 1, y: 2, pixelX: 3, pixelY: 4, dataRevision: 3 };
   element.props.onSelectPoint(point);
   expect(selected).toHaveBeenCalledWith(point);
 });
@@ -81,7 +81,7 @@ test('forwards imperative calls to the attached native instance and tolerates de
     fitScreen: jest.fn(),
   };
   const points = [{ x: 1, y: 2 }];
-  const sets = [{ values: points }];
+  const sets = [{ values: points, dataRevision: 4 }];
   element.props.hybridRef(native);
   ref.appendPoint(1, 2, 5);
   ref.appendPointsBatch(points, 5);
@@ -133,6 +133,7 @@ test('normalizes string and number colors to hex for native host', () => {
   const dataSets = [
     {
       values: [{ x: 1, y: 2 }],
+      dataRevision: 5,
       config: {
         circleColor: 0xff34c759,
         circleHoleColor: '#ffffff',
@@ -145,4 +146,5 @@ test('normalizes string and number colors to hex for native host', () => {
   expect(element.props.config.xAxis.textColor).toBe('#ff8e8e93');
   expect(element.props.dataSets[0].config.circleColor).toBe('#ff34c759');
   expect(element.props.dataSets[0].config.circleHoleColor).toBe('#ffffff');
+  expect(element.props.dataSets[0].dataRevision).toBe(5);
 });

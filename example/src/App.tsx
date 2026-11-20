@@ -57,6 +57,7 @@ export default function App() {
   const [isBezier, setIsBezier] = useState(true);
   const [isFilled, setIsFilled] = useState(true);
   const [showCircles, setShowCircles] = useState(false);
+  const [travelRevision, setTravelRevision] = useState(1);
   const [selectedPoint, setSelectedPoint] = useState<SelectedPoint | null>(
     null
   );
@@ -131,6 +132,7 @@ export default function App() {
       {
         values,
         label: 'Price',
+        dataRevision: 1,
         config: {
           color: '#007AFF',
           lineWidth: 2.5,
@@ -149,6 +151,7 @@ export default function App() {
       {
         values: minPoints,
         label: 'Lowest Price Marker',
+        dataRevision: 1,
         config: {
           color: '#34C759',
           drawCircles: true,
@@ -238,6 +241,9 @@ export default function App() {
     if (tab === 'streaming' && activeTab !== 'streaming') {
       chartRef.current?.clearData();
     }
+    if (tab === 'travel' && activeTab !== 'travel') {
+      setTravelRevision(1);
+    }
     setSelectedPoint(null);
     setActiveTab(tab);
   };
@@ -315,7 +321,7 @@ export default function App() {
           <Text style={styles.statNote}>
             {activeTab === 'streaming'
               ? 'Max 200 pts sliding'
-              : 'Hide dupes & holes'}
+              : `Chart revision: ${travelRevision}`}
           </Text>
         </View>
         <View style={styles.statItem}>
@@ -330,6 +336,11 @@ export default function App() {
               ? `px: (${selectedPoint.pixelX.toFixed(0)}, ${selectedPoint.pixelY.toFixed(0)})`
               : 'Inspect coords'}
           </Text>
+          {activeTab === 'travel' && selectedPoint && (
+            <Text testID="selected-revision" style={styles.statNote}>
+              Selected revision: {selectedPoint.dataRevision ?? 'none'}
+            </Text>
+          )}
         </View>
       </View>
 
@@ -480,6 +491,24 @@ export default function App() {
           </>
         ) : (
           <View style={styles.travelNotesCard}>
+            <TouchableOpacity
+              testID="replace-travel-revision"
+              accessibilityLabel="Replace travel dataset"
+              style={[styles.btn, styles.btnOutline]}
+              onPress={() => {
+                const nextRevision = travelRevision + 1;
+                chartRef.current?.setDataSets(
+                  travelDataSets.map((set) => ({
+                    ...set,
+                    dataRevision: nextRevision,
+                  }))
+                );
+                setTravelRevision(nextRevision);
+                setSelectedPoint(null);
+              }}
+            >
+              <Text style={styles.btnOutlineText}>Replace travel dataset</Text>
+            </TouchableOpacity>
             <Text style={styles.travelNotesTitle}>
               AI Travel App Features Verified:
             </Text>

@@ -82,7 +82,8 @@ private class ChartDelegateProxy: NSObject, ChartViewDelegate {
       pixelX: pixelX,
       pixelY: pixelY,
       dataIndex: index >= 0 ? Double(index) : nil,
-      dataSetIndex: Double(highlight.dataSetIndex)
+      dataSetIndex: Double(highlight.dataSetIndex),
+      dataRevision: owner?.dataRevision(for: setIndex)
     )
     owner?.onSelectPoint?(point)
   }
@@ -119,6 +120,7 @@ class HybridFastLineChart: HybridFastLineChartSpec {
   }()
 
   private var singleDataSet: DGCharts.LineChartDataSet?
+  private var dataRevisions: [Double?] = []
   private var displayLink: CADisplayLink?
   private var needsRedraw: Bool = false
   private var lastAppendedX: Double = 0.0
@@ -144,15 +146,18 @@ class HybridFastLineChart: HybridFastLineChartSpec {
 
   var dataSets: [LineChartDataSet]? {
     didSet {
-      DispatchQueue.main.async { [weak self] in
-        if let sets = self?.dataSets {
-          try? self?.setChartDataSets(dataSets: sets)
-        }
+      if let sets = dataSets {
+        try? setChartDataSets(dataSets: sets)
       }
     }
   }
 
   var onSelectPoint: ((_ point: SelectedPoint) -> Void)?
+
+  fileprivate func dataRevision(for setIndex: Int) -> Double? {
+    guard dataRevisions.indices.contains(setIndex) else { return nil }
+    return dataRevisions[setIndex]
+  }
 
   override init() {
     super.init()
@@ -411,6 +416,7 @@ class HybridFastLineChart: HybridFastLineChartSpec {
       self.singleDataSet = set
 
       let data = DGCharts.LineChartData(dataSet: set)
+      self.dataRevisions = []
       self.chartView.data = data
 
       if let visibleX = self.config?.visibleRangeX, visibleX > 0 {
@@ -446,6 +452,7 @@ class HybridFastLineChart: HybridFastLineChartSpec {
 
       let data = DGCharts.LineChartData(dataSets: nativeSets)
       self.singleDataSet = nil
+      self.dataRevisions = dataSets.map(\.dataRevision)
       self.chartView.data = data
       self.chartView.highlightValues(nil)
       if wasSingleDataSet { self.chartView.fitScreen() }
@@ -467,6 +474,7 @@ class HybridFastLineChart: HybridFastLineChartSpec {
       self.needsRedraw = false
       self.singleDataSet?.removeAll(keepingCapacity: false)
       self.singleDataSet = nil
+      self.dataRevisions = []
       self.chartView.highlightValues(nil)
       self.chartView.data = nil
       self.chartView.notifyDataSetChanged()

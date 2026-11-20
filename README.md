@@ -55,6 +55,10 @@ The `xAxis` and `yAxis` settings override the corresponding shared styling setti
 
 Use `onSelectPoint` to receive the selected `x` and `y` values and the `pixelX` and `pixelY` coordinates in React Native layout units relative to the chart. The ref exposes `setDataSets` and its alias `setChartDataSets` for replacing multiple datasets.
 
+Set the optional `dataRevision` on each dataset to identify the data snapshot used for a selection. The event returns the revision of the dataset selected on the native chart, so you can look up the matching snapshot even if you have already requested a newer update. Use the same revision for all datasets that belong to one snapshot. Selections from untagged datasets leave `dataRevision` undefined.
+
+Keep the corresponding snapshots until delayed selection events can no longer arrive; if a revision is no longer available, ignore the event instead of using the latest data. A revision identifies the selected dataset only: it does not make separate axis-config updates atomic or prevent a selection from an earlier search from reaching JavaScript. Applications should also invalidate old selections when their search scope changes. Replacing datasets still rebuilds the native chart data, so measure the update workload before relying on streaming append performance for multi-dataset charts.
+
 Streaming append methods operate on a single dataset. After setting multiple
 datasets, call `clearData()` or `setDataPoints()` before appending; append calls
 are otherwise ignored. Non-finite points are ignored. On Android, the native
