@@ -8,7 +8,7 @@ PODS:
     - ReactNativeDependencies
   - fast_float (8.0.0):
     - ReactNativeDependencies
-  - FastLineChart (0.1.1):
+  - FastLineChart (0.1.2):
     - DGCharts (~> 5.0.0)
     - hermes-engine
     - NitroModules
@@ -2078,7 +2078,7 @@ SPEC CHECKSUMS:
   DGCharts: 6e0cf2644e8f81ad13f04caa8bc18502870a1c54
   DoubleConversion: 501a575c40c0b50c89685762dd3e415e6bb26fb0
   fast_float: 7c925d1cebf8328d4018d061f49377e9f887e3b4
-  FastLineChart: bf0ab0173dd414b49099c833822d8a962cb3a5cb
+  FastLineChart: ba8aa500bd820f23a35598d30a8aef3cad6e6bdc
   FBLazyVector: fdebac2dfe9c53bca49f8218fbdf1e24e36c8be0
   fmt: ba0886e864ebb21d14c98b2e12e164b8002f5b93
   glog: 3cf7cb46f743c4bc758ae3e6d9c15bd1b4cfd6d4
